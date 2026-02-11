@@ -5,36 +5,232 @@
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <title>老闆卡拉OK</title>
   <style>
-    body{font-family:system-ui,-apple-system,"Segoe UI",Roboto,"Noto Sans TC",sans-serif; padding:24px; line-height:1.7;}
-    .card{max-width:860px;margin:auto;border:1px solid #e5e7eb;border-radius:14px;padding:18px 20px; box-shadow:0 6px 18px rgba(0,0,0,.06);}
-    h1{margin:0 0 8px;}
-    .tag{display:inline-block;padding:2px 10px;border-radius:999px;background:#f3f4f6;margin-right:8px;font-size:14px;}
-    input{width:100%;padding:12px 14px;border-radius:10px;border:1px solid #d1d5db;font-size:16px;}
-    ul{padding-left:18px;}
-    footer{opacity:.7;margin-top:16px;font-size:13px;}
+    :root{
+      --bd:#e5e7eb; --muted:#6b7280; --bg:#f9fafb; --card:#ffffff;
+      --ok:#16a34a; --warn:#b45309;
+    }
+    body{font-family:system-ui,-apple-system,"Segoe UI",Roboto,"Noto Sans TC",sans-serif; padding:22px; line-height:1.7; background:var(--bg);}
+    .card{max-width:980px;margin:0 auto;border:1px solid var(--bd);border-radius:16px;padding:18px 20px;background:var(--card); box-shadow:0 10px 26px rgba(0,0,0,.06);}
+    h1{margin:0 0 8px; font-size:34px;}
+    .sub{color:var(--muted); margin:0 0 14px;}
+    .row{display:flex; gap:10px; flex-wrap:wrap; align-items:center; margin:12px 0;}
+    .tag{display:inline-block;padding:3px 10px;border-radius:999px;background:#eef2ff;margin-right:6px;font-size:13px;border:1px solid #e0e7ff;}
+    input,select{padding:10px 12px;border-radius:12px;border:1px solid #d1d5db;font-size:16px; background:#fff;}
+    input{flex:1; min-width:260px;}
+    button{padding:10px 12px;border-radius:12px;border:1px solid #d1d5db;background:#fff;cursor:pointer;}
+    button.primary{background:#111827;color:#fff;border-color:#111827;}
+    button.ghost{background:transparent;}
+    .hint{color:var(--muted); font-size:13px; margin:6px 0 0;}
+    table{width:100%; border-collapse:collapse; margin-top:14px; overflow:hidden; border-radius:14px; border:1px solid var(--bd); background:#fff;}
+    th,td{padding:10px 10px; border-bottom:1px solid var(--bd); text-align:left; vertical-align:top;}
+    th{background:#f3f4f6; font-size:13px; color:#111827;}
+    tr:last-child td{border-bottom:none;}
+    .id{font-variant-numeric:tabular-nums; font-family:ui-monospace,SFMono-Regular,Menlo,Monaco,Consolas,monospace;}
+    .muted{color:var(--muted); font-size:13px;}
+    .pill{display:inline-block;padding:2px 8px;border-radius:999px;border:1px solid var(--bd); font-size:12px; color:#111827; background:#fff;}
+    .sung{background:#ecfdf5;border-color:#bbf7d0;}
+    .sung .pill{border-color:#86efac;}
+    .btnSung{white-space:nowrap;}
+    .ok{color:var(--ok); font-weight:600;}
+    .warn{color:var(--warn); font-weight:600;}
+    footer{opacity:.8;margin-top:14px;font-size:12px;color:var(--muted);}
   </style>
 </head>
 <body>
   <div class="card">
     <h1>🎤 老闆卡拉OK</h1>
-    <div>
+    <p class="sub">日本演歌歌單整理與練唱工具｜搜尋・點歌・已唱標記（會記住）</p>
+
+    <div class="row">
       <span class="tag">日本演歌</span>
       <span class="tag">歌單整理</span>
       <span class="tag">練唱記錄</span>
+      <span id="status" class="muted">讀取中…</span>
     </div>
 
-    <p>網站已啟動。下一步：上傳歌單（CSV），就能做「搜尋＋點歌＋已唱標記」。</p>
+    <div class="row">
+      <input id="q" placeholder="輸入 歌名 / 歌手 / 歌號（例如：000002 或 冬景色）" />
+      <select id="sort">
+        <option value="id">依歌號</option>
+        <option value="title">依歌名</option>
+        <option value="artist">依歌手</option>
+      </select>
+      <button id="btnReload" class="ghost">重新讀取歌單</button>
+      <button id="btnClear" class="ghost">清除已唱記錄</button>
+    </div>
+    <div class="hint">歌單來源：<b>songs.csv</b>（已上傳）｜已唱記錄存在你的瀏覽器，不怕關掉忘記。</div>
 
-    <h3>🔎 先放一個搜尋框（之後會真的連到歌單）</h3>
-    <input placeholder="輸入歌名 / 歌手 / 編號（例如：冬景色）" />
-
-    <h3>✅ 接下來你要做的兩件事</h3>
-    <ul>
-      <li>上傳歌單檔：<b>songs.csv</b>（我會給你一鍵格式）</li>
-      <li>我幫你做點歌介面：可查詢、可排序、可記錄已唱</li>
-    </ul>
+    <table>
+      <thead>
+        <tr>
+          <th style="width:90px;">歌號</th>
+          <th>歌名</th>
+          <th style="width:180px;">歌手</th>
+          <th style="width:160px;">備註</th>
+          <th style="width:140px;">操作</th>
+        </tr>
+      </thead>
+      <tbody id="list">
+        <tr><td colspan="5" class="muted">載入中…</td></tr>
+      </tbody>
+    </table>
 
     <footer>老闆出手，歌單有路；一按即唱，唱過不忘。</footer>
   </div>
+
+<script>
+  const SONGS_URL = './songs.csv';
+  const KEY = 'boss-karaoke:sung:v1';
+
+  const $q = document.getElementById('q');
+  const $sort = document.getElementById('sort');
+  const $list = document.getElementById('list');
+  const $status = document.getElementById('status');
+  const $btnReload = document.getElementById('btnReload');
+  const $btnClear = document.getElementById('btnClear');
+
+  let songs = [];
+  let sung = loadSung();
+
+  function loadSung(){
+    try { return new Set(JSON.parse(localStorage.getItem(KEY) || '[]')); }
+    catch { return new Set(); }
+  }
+  function saveSung(){
+    localStorage.setItem(KEY, JSON.stringify([...sung]));
+  }
+
+  function parseCSV(text){
+    // 簡單CSV：支援逗號分隔與雙引號包住欄位
+    const lines = text.replace(/\r/g,'').split('\n').filter(l => l.trim().length);
+    if (!lines.length) return [];
+    const headers = splitCSVLine(lines[0]).map(h=>h.trim());
+    const out = [];
+    for (let i=1;i<lines.length;i++){
+      const cols = splitCSVLine(lines[i]);
+      const row = {};
+      headers.forEach((h,idx)=> row[h] = (cols[idx] ?? '').trim());
+      out.push(row);
+    }
+    return out;
+  }
+
+  function splitCSVLine(line){
+    const res = [];
+    let cur = '';
+    let inQ = false;
+    for (let i=0;i<line.length;i++){
+      const ch = line[i];
+      if (ch === '"' ){
+        if (inQ && line[i+1] === '"'){ cur += '"'; i++; }
+        else inQ = !inQ;
+      } else if (ch === ',' && !inQ){
+        res.push(cur); cur = '';
+      } else {
+        cur += ch;
+      }
+    }
+    res.push(cur);
+    return res;
+  }
+
+  async function loadSongs(){
+    $status.textContent = '讀取 songs.csv…';
+    try{
+      const r = await fetch(SONGS_URL, { cache: 'no-store' });
+      if (!r.ok) throw new Error('HTTP ' + r.status);
+      const text = await r.text();
+      const rows = parseCSV(text);
+
+      // 兼容：若欄位名不是 id/title/artist/notes，也嘗試用常見中文欄位
+      songs = rows.map(x => ({
+        id: x.id || x.ID || x.歌號 || x.number || '',
+        title: x.title || x.歌名 || x.name || '',
+        artist: x.artist || x.歌手 || x.singer || '',
+        notes: x.notes || x.備註 || x.note || ''
+      })).filter(s => (s.id || s.title || s.artist));
+
+      $status.innerHTML = `歌單：<span class="ok">${songs.length}</span> 首｜已唱：<span class="ok">${sung.size}</span> 首`;
+      render();
+    }catch(e){
+      $status.innerHTML = `歌單讀取失敗：<span class="warn">${String(e.message || e)}</span>`;
+      $list.innerHTML = `<tr><td colspan="5" class="muted">讀取 songs.csv 失敗。請確認檔名為 <b>songs.csv</b> 且與 index.html 同一層。</td></tr>`;
+    }
+  }
+
+  function norm(s){ return (s||'').toLowerCase(); }
+
+  function getFiltered(){
+    const q = norm($q.value).trim();
+    let arr = [...songs];
+
+    // sort
+    const k = $sort.value;
+    arr.sort((a,b)=> (a[k]||'').localeCompare((b[k]||''), 'ja'));
+
+    if (!q) return arr;
+    return arr.filter(s=>{
+      const hay = `${s.id} ${s.title} ${s.artist} ${s.notes}`.toLowerCase();
+      return hay.includes(q);
+    });
+  }
+
+  function render(){
+    const arr = getFiltered();
+    if (!arr.length){
+      $list.innerHTML = `<tr><td colspan="5" class="muted">沒有符合的歌曲。</td></tr>`;
+      return;
+    }
+    $list.innerHTML = arr.map(s=>{
+      const isSung = sung.has(s.id || (s.title + '|' + s.artist));
+      const key = (s.id || (s.title + '|' + s.artist));
+      return `
+        <tr class="${isSung ? 'sung' : ''}">
+          <td class="id">${escapeHtml(s.id)}</td>
+          <td>
+            <div><b>${escapeHtml(s.title)}</b></div>
+            ${isSung ? `<span class="pill">已唱 ✅</span>` : `<span class="pill">未唱</span>`}
+          </td>
+          <td>${escapeHtml(s.artist)}</td>
+          <td class="muted">${escapeHtml(s.notes)}</td>
+          <td>
+            <button class="btnSung primary" data-key="${encodeURIComponent(key)}">
+              ${isSung ? '取消已唱' : '標記已唱'}
+            </button>
+          </td>
+        </tr>`;
+    }).join('');
+
+    // 綁定按鈕
+    document.querySelectorAll('.btnSung').forEach(btn=>{
+      btn.addEventListener('click', ()=>{
+        const key = decodeURIComponent(btn.getAttribute('data-key'));
+        if (sung.has(key)) sung.delete(key);
+        else sung.add(key);
+        saveSung();
+        $status.innerHTML = `歌單：<span class="ok">${songs.length}</span> 首｜已唱：<span class="ok">${sung.size}</span> 首`;
+        render();
+      });
+    });
+  }
+
+  function escapeHtml(s){
+    return (s||'').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+  }
+
+  $q.addEventListener('input', render);
+  $sort.addEventListener('change', render);
+  $btnReload.addEventListener('click', loadSongs);
+  $btnClear.addEventListener('click', ()=>{
+    if (confirm('確定要清除「已唱記錄」嗎？')) {
+      sung = new Set();
+      saveSung();
+      $status.innerHTML = `歌單：<span class="ok">${songs.length}</span> 首｜已唱：<span class="ok">0</span> 首`;
+      render();
+    }
+  });
+
+  loadSongs();
+</script>
 </body>
 </html>
